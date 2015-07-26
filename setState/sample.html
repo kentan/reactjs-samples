@@ -1,0 +1,99 @@
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Hello React</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/0.13.3/react.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/0.13.3/JSXTransformer.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/0.3.2/marked.min.js"></script> 
+
+ </head>
+  <body>
+    <div id="content"></div>
+    <script type="text/jsx">
+
+
+var CompanyList = React.createClass({
+  render: function() {
+    var nodes = this.props.data.map(function (data) {
+      return (
+        <Company company={data.company}>
+          {data.price}
+        </Company>
+      );
+    });
+    return (
+      <div className="companyList">
+        {nodes}
+      </div>
+    );
+  }
+});
+
+
+var CompanyBox = React.createClass({
+  getInitialState: function() {
+    return {data: []};
+   },
+
+
+  render: function() {
+    return (
+      <div className="companyBox">
+        <h1>Titile</h1>
+        <CompanyList data={this.state.data} />
+      </div>
+    );
+  },
+  sortData : function(data){
+     data.sort(function(a,b){
+        return parseInt(b.price) - parseInt(a.price)
+     });
+  },
+  loadFromServer: function() {
+    $.ajax({
+      url: this.props.url,
+      dataType: 'json',
+      cache: false,
+      success: function(data) {
+        this.sortData(data)
+        
+        
+        this.setState({data: data});
+        
+        console.log({data:data});
+      }.bind(this),
+      error: function(xhr, status, err) {
+        console.log("hoge2");
+        console.error(this.props.url, status, err.toString());
+      }.bind(this)
+    });
+  },
+    componentDidMount: function() {
+    this.loadFromServer();
+    setInterval(this.loadFromServer, this.props.pollInterval);
+  }
+}); 
+
+var Company = React.createClass({
+  render: function() {
+    var rawMarkup = marked(this.props.children.toString(), {sanitize: true}); 
+   return (
+      <div className="company">
+        <h2 className="companyName">
+          {this.props.company}
+        </h2>
+        <span dangerouslySetInnerHTML={{__html: rawMarkup}} /> 
+     </div>
+    );
+  }
+});
+
+
+React.render(
+  <CompanyBox url="data.json" pollInterval={2000} />,
+  document.getElementById('content')
+);
+    </script>
+  </body>
+</html>
